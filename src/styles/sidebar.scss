@@ -1,0 +1,103 @@
+#app {
+  // 顶部导航 topnavbar
+  .topnavbar {
+    position: fixed;
+    font-size: 0px;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    line-height: 50px;
+    z-index:1002;
+    border-radius: 0px !important;
+    background-color: $menuBg;
+    border-bottom: 1px solid #e6e6e6;
+    .topnavbarBox {
+      position: relative;
+      margin: auto;
+      box-sizing: border-box;
+      padding: 0 10px;
+      .name-box{
+        display: inline-block;
+        position: absolute;
+        right: 20px;
+        font-size:14px;
+        overflow: hidden;
+        color:#fff;
+        .exit-btn {
+          margin-left:30px;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  // 主体区域
+  .main-container {
+    min-height: 100%;
+    padding-top:50px;
+    transition: margin-left .28s;
+    margin-left: 200px;
+    position: relative;
+    background-color: rgb(240, 242, 245);
+  }
+  // 侧边栏
+  .sidebar-container {
+    transition: width 0.28s;
+    width: 200px !important;
+    height: 100%;
+    position: fixed;
+    font-size: 0px;
+    top: 0;
+    padding-top:50px;
+    bottom: 0;
+    left: 0;
+    z-index: 1001;
+    overflow: hidden;
+    background-color: $menuBg;
+    //reset element-ui css
+    .horizontal-collapse-transition {
+      transition: 0s width ease-in-out, 0s padding-left ease-in-out, 0s padding-right ease-in-out;
+    }
+    .scrollbar-wrapper {
+      height: 100%;
+      overflow: auto;
+      .el-scrollbar__view {
+        height: 100%;
+      }
+    }
+    .is-horizontal {
+      display: none;
+    }
+    a {
+      display: inline-block;
+      width: 100%;
+      overflow: hidden;
+    }
+    .svg-icon {
+      margin-right: 16px;
+    }
+    .el-menu{
+      background-color: $menuBg;
+    }
+    .el-menu-sidebar {
+      border: none;
+      height: 100%;
+      width: 100% !important;
+    }
+    .el-submenu__title{
+      color:#bfcbd9;
+    }
+  }
+  .sidebar-container .nest-menu .el-submenu>.el-submenu__title,
+  .sidebar-container .el-submenu .el-menu-item {
+    min-width: 200px !important;
+    color:#bfcbd9;
+    background-color: $subMenuBg !important;
+    &:hover {
+      background-color: $menuHover !important;
+    }
+  }
+  .el-menu--collapse .el-menu .el-submenu {
+    min-width: 180px !important;
+  }
+}
