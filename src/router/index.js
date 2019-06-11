@@ -89,7 +89,20 @@ export const constantRouterMap = [
       }
     ]
   },
-
+  {
+    path: '',
+    component: Layout,
+    children: [
+      {
+        path: 'superAdministrator',
+        name: 'superAdministrator',
+        meta: {
+          title: '超级管理员'
+        },
+        component: () => import('@/views/superAdministrator/index')
+      }
+    ]
+  },
   { path: '*', redirect: '/404', hidden: true }
 ]
 

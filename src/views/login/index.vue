@@ -53,17 +53,18 @@ export default {
         if (!reg.test(value)) {
           callback(new Error('请输入正确的手机号码'))
         } else {
-          request.get(checkRegister, { account: value }, function(response) {
-            if (response.success) {
-              if (response.data === -1) {
-                callback(new Error('该账号已停用，请联系管理员'))
-              } else if (response.data === 1) {
-                callback(new Error('该账号不存在，请检查后重试'))
-              } else if (response.data === 0) {
-                callback()
-              }
-            }
-          })
+          // request.get(checkRegister, { account: value }, function(response) {
+          //   if (response.success) {
+          //     if (response.data === -1) {
+          //       callback(new Error('该账号已停用，请联系管理员'))
+          //     } else if (response.data === 1) {
+          //       callback(new Error('该账号不存在，请检查后重试'))
+          //     } else if (response.data === 0) {
+          //       callback()
+          //     }
+          //   }
+          // })
+          callback()
         }
       }
     }
@@ -115,7 +116,6 @@ export default {
               for (let i = 0; i < errorCode.length; i++) {
                 if (response.code === errorCode[i].code) {
                   Message.error(errorCode[i].msg)
-                  this.changeImgVc()
                   return
                 }
               }

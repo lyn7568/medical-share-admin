@@ -8,11 +8,16 @@ module.exports = {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
+    proxyTable: {
+      '/ajax': {
+        target: 'http://192.168.3.233:85',
+        changeOrigin: true
+      }
+    },
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST
-    port: 9558,
+    port: 2222,
     autoOpenBrowser: false,
     errorOverlay: true,
     notifyOnErrors: false,
