@@ -36,6 +36,17 @@
                     @current-change="sel.value"
                   ></el-option>
                 </el-select>
+                <el-select
+                  v-else-if="item.selectSearch"
+                  v-model="formObj[item.prop]"
+                  :placeholder="'请选择'+item.tit">
+                  <el-option
+                    v-for="sel in departList"
+                    :key="sel.id"
+                    :label="sel.name"
+                    :value="sel.id">
+                  </el-option>
+                </el-select>
                 <uploadFile
                   v-else-if="item.upload"
                   :upImgsStr="formObj[item.prop]"
@@ -68,15 +79,15 @@
     </el-form>
     <div slot="footer" class="dialog-footer" align="center">
       <el-button @click="dialogFormVisible = false">取 消</el-button>
-      <el-button type="primary" @click="saveSubmitInfo">保 存</el-button>
+      <el-button type="primary" @click="submitForm('formObj')">保 存</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
+import { addApply, updateApply, applyLogo } from '@/api/api'
 import { requiredTip } from '@/utils'
 import uploadFile from '@/components/uploadFile'
-import dynamicTags from '@/components/DynamicTags'
 export default {
   data() {
     return {
@@ -84,7 +95,7 @@ export default {
       formItem: [
         {
           span: 24,
-          prop: 'img',
+          prop: 'image',
           upload: true
         },
         {
@@ -96,25 +107,26 @@ export default {
         },
         {
           span: 12,
-          prop: 'titi',
+          prop: 'status',
           tit: '使用状态',
           select: this.$parent.useLists
         },
         {
           span: 12,
-          prop: 'tit',
+          prop: 'department',
           tit: '所属科室',
-          num: 20
+          num: 20,
+          selectSearch: true
         },
         {
           span: 12,
-          prop: 'tit',
+          prop: 'spec',
           tit: '厂商型号',
           num: 20
         },
         {
           span: 24,
-          prop: 'descp',
+          prop: 'application',
           tit: '功能用途',
           textarea: true,
           num: 2000
@@ -130,26 +142,16 @@ export default {
       formLoading: false,
       formObj: {
         name: '',
-        logo: '',
-        url: '',
-        manageOrg: '',
-        addr: '',
-        location: '',
-        zipCode: '',
-        servicePhone: '',
-        serviceEmail: '',
-        operateTime: '',
-        linkman: '',
-        job: '',
+        status: '',
         department: '',
-        comp: '',
-        linkphone: '',
-        linkemail: '',
-        descp: ''
+        spec: '',
+        application: '',
+        descp: '',
+        image: ''
       },
       rulesObj: {},
       uploadImg: {
-        // url: uploadLogo,
+        url: applyLogo,
         tip: '上传器械图片',
         width: '180px',
         height: '180px',
@@ -158,12 +160,11 @@ export default {
     }
   },
   components: {
-    uploadFile,
-    dynamicTags
+    uploadFile
   },
   computed: {
-    UID() {
-      return this.$store.getters.userid
+    departList() {
+      return this.$store.getters.departArrs
     }
   },
   created() {
@@ -191,40 +192,72 @@ export default {
         this.objId = val.id
         this.formObj = val
       } else {
+        this.objId = ''
         this.formObj = {
-          test: ''
+          name: '',
+          status: '',
+          department: '',
+          spec: '',
+          application: '',
+          descp: '',
+          image: ''
         }
       }
       setTimeout(() => {
         that.dialogFormVisible = true
       }, 1)
     },
-    saveSubmitInfo() {
+    closeForm(formName) {
+      this.$refs[formName].resetFields()
+      this.formObj.image = ''
+      this.$parent.resetInfo()
+      this.dialogFormVisible = false
+    },
+    submitForm(formName) {
       var that = this
-      this.$refs['formObj'].validate(valid => {
+      that.$refs[formName].validate((valid) => {
         if (valid) {
+          const form = that.formObj
           const paramsData = {
-
+            name: form.name,
+            status: form.status,
+            spec: form.spec,
+            application: form.application,
+            department: form.department,
+            descp: form.descp,
+            image: form.image
           }
-          // that.$http.post('/esn/add', paramsData, function(res) {
-          //   if (res.success) {
-          //     that.$message({
-          //       message: '信息保存成功',
-          //       type: 'success'
-          //     })
-          //     that.closeDialog()
-          //     that.$parent.resetInfo()
-          //   }
-          // })
+          if (that.objId) {
+            const paramsId = { id: that.objId }
+            const obj = Object.assign(paramsId, paramsData)
+            that.$http.post(updateApply, obj, function(res) {
+              if (res.success) {
+                that.$message({
+                  message: '信息修改成功',
+                  type: 'success'
+                })
+                that.closeForm(formName)
+              }
+            })
+          } else {
+            that.$http.post(addApply, paramsData, function(res) {
+              if (res.success) {
+                that.$message({
+                  message: '信息添加成功',
+                  type: 'success'
+                })
+                that.closeForm(formName)
+              }
+            })
+          }
+        } else {
+          window.scroll(0, 0)
+          return false
         }
       })
     },
-    closeDialog() {
-      this.$refs['formObj'].resetFields()
-      this.dialogFormVisible = false
-    },
     uploadfun(value) {
-      this.formObj.logo = value
+      this.formObj.image = value
     }
   }
 }

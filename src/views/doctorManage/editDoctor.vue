@@ -4,7 +4,8 @@
     title="医生管理"
     :visible.sync="dialogFormVisible"
     :close-on-click-modal="false"
-    width="760px"
+    width="800px"
+    @close="closeForm('formObj')"
   >
     <el-form
       :model="formObj"
@@ -15,7 +16,7 @@
       v-loading="formLoading"
     >
       <el-row :gutter="25">
-        <el-col :span="18">
+        <el-col :span="16">
           <el-row :gutter="20" class="update-main">
             <el-col :span="item.span||''" v-for="item in formItem" :key="item.index">
               <el-form-item v-if="item.prop" :label="item.tit" :prop="item.prop">
@@ -36,10 +37,22 @@
                     @current-change="sel.value"
                   ></el-option>
                 </el-select>
+                <el-select
+                  v-else-if="item.selectSearch"
+                  v-model="formObj[item.prop]"
+                  :placeholder="'请选择'+item.tit">
+                  <el-option
+                    v-for="sel in departList"
+                    :key="sel.id"
+                    :label="sel.name"
+                    :value="sel.id">
+                  </el-option>
+                </el-select>
                 <dynamicTags
                   v-else-if="item.tag"
                   :tagInfo="item.tag"
-                  @turnTags="turnSubjectTags($event)"
+                  :dyStr="dyStrArr"
+                  @turnTags="turnTags($event)"
                 ></dynamicTags>
                 <el-cascader
                   v-else-if="item.cascader"
@@ -50,7 +63,7 @@
                     children: 'children'
                   }"
                   v-model="formObj[item.prop]"
-                  :placeholder="'请选择'+item.tit">
+                  :placeholder="'请选择'+item.tit" @change="changeCascader">
                 </el-cascader>
                 <el-input
                   v-else
@@ -63,25 +76,28 @@
             </el-col>
           </el-row>
         </el-col>
-        <el-col :span="6">
-          <uploadFile :upImgsStr="formObj.logo" :uploadImg="uploadImg" @uploadfun="uploadfun"></uploadFile>
+        <el-col :span="8">
+          <uploadFile :upImgsStr="formObj.image" :uploadImg="uploadImg" @uploadfun="uploadfun"></uploadFile>
         </el-col>
       </el-row>
     </el-form>
     <div slot="footer" class="dialog-footer" align="center">
       <el-button @click="dialogFormVisible = false">取 消</el-button>
-      <el-button type="primary" @click="saveSubmitInfo">保 存</el-button>
+      <el-button type="primary" @click="submitForm('formObj')">保 存</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
-import { requiredTip } from '@/utils'
+import { addDoctor, updateDoctor, doctorLogo, checkDoctor } from '@/api/api'
+import { requiredTip, strToArr, arrToStr } from '@/utils'
 import uploadFile from '@/components/uploadFile'
 import dynamicTags from '@/components/DynamicTags'
+import { slelectTeachTitle, slelectClinicalTitle } from '@/utils/dict'
 export default {
   data() {
     return {
+      objId: '',
       dialogFormVisible: false,
       formItem: [
         {
@@ -100,46 +116,32 @@ export default {
         },
         {
           span: 12,
-          prop: 'cat',
+          prop: 'department',
           tit: '所属科室',
-          num: 20
+          num: 20,
+          selectSearch: true
         },
         {
           span: 12,
-          prop: 'size',
+          prop: 'clinicalTitle',
           tit: '临床职称',
-          cascader: [
-            { label: '特等', value: '1',
-              children: [
-                { label: '特等1-1', value: '1-1' },
-                { label: '特等1-2', value: '1-2' }
-              ]
-            },
-            { label: '甲等', value: '2' },
-            { label: '乙等', value: '3' },
-            { label: '丙等', value: '4' }
-          ]
+          cascader: slelectClinicalTitle
         },
         {
           span: 12,
-          prop: 'titi',
+          prop: 'teachTitle',
           tit: '教学职称',
-          select: [
-            { label: '教授', value: '1' },
-            { label: '副教授', value: '2' },
-            { label: '讲师', value: '3' },
-            { label: '助理讲师', value: '4' }
-          ]
+          select: slelectTeachTitle
         },
         {
           span: 12,
-          prop: 'tit',
+          prop: 'position',
           tit: '行政职务',
           num: 20
         },
         {
           span: 24,
-          prop: 'subject',
+          prop: 'direction',
           tit: '擅长方向',
           tag: {
             lableTit: '擅长方向',
@@ -158,41 +160,34 @@ export default {
       ],
       formLoading: false,
       formObj: {
+        account: '',
         name: '',
-        logo: '',
-        url: '',
-        manageOrg: '',
-        addr: '',
-        location: '',
-        zipCode: '',
-        servicePhone: '',
-        serviceEmail: '',
-        operateTime: '',
-        linkman: '',
-        job: '',
         department: '',
-        comp: '',
-        linkphone: '',
-        linkemail: '',
-        descp: ''
+        clinicalTitle: [],
+        teachTitle: '',
+        position: '',
+        direction: '',
+        descp: '',
+        image: ''
       },
       rulesObj: {},
       uploadImg: {
-        // url: uploadLogo,
+        url: doctorLogo,
         tip: '上传图片',
-        width: '140px',
-        height: '140px'
-      }
+        width: '220px',
+        height: '220px'
+      },
+      dyStrArr: []
+    }
+  },
+  computed: {
+    departList() {
+      return this.$store.getters.departArrs
     }
   },
   components: {
     uploadFile,
     dynamicTags
-  },
-  computed: {
-    UID() {
-      return this.$store.getters.userid
-    }
   },
   created() {
     this.pushRulesFn()
@@ -204,11 +199,51 @@ export default {
       for (let i = 0; i < formItem.length; ++i) {
         const ru = []
         if (formItem[i].required) {
-          ru.push({
-            required: true,
-            message: requiredTip(formItem[i].tit),
-            trigger: 'blur'
-          })
+          if (formItem[i].prop === 'account') {
+            ru.push({
+              required: true,
+              validator: (rule, value, callback) => {
+                const reg = /^1[3|4|5|7|8][0-9]\d{8}$/
+                if (!value) {
+                  callback(new Error('请输入账户'))
+                } else {
+                  if (!reg.test(value)) {
+                    callback(new Error('请输入手机号码账号'))
+                  } else {
+                    var obj = {}
+                    if (this.objId) {
+                      obj = {
+                        active: 1,
+                        account: value,
+                        id: this.objId
+                      }
+                    } else {
+                      obj = {
+                        active: 1,
+                        account: value
+                      }
+                    }
+                    this.$http.get(checkDoctor, obj, function(res) {
+                      if (res.success) {
+                        if (res.data) {
+                          callback(new Error('账户已存在，请重新输入'))
+                        } else {
+                          callback()
+                        }
+                      }
+                    })
+                  }
+                }
+              },
+              trigger: 'blur'
+            })
+          } else {
+            ru.push({
+              required: true,
+              message: requiredTip(formItem[i].tit),
+              trigger: 'blur'
+            })
+          }
         }
         rulesObj[formItem[i].prop] = ru
       }
@@ -217,42 +252,100 @@ export default {
       var that = this
       if (val) {
         this.objId = val.id
-        this.formObj = val
-      } else {
         this.formObj = {
-          test: ''
+          account: val.account,
+          name: val.name,
+          department: val.department,
+          clinicalTitle: [],
+          teachTitle: val.teachTitle,
+          position: val.position,
+          direction: val.direction,
+          descp: val.descp,
+          image: val.image
+        }
+        if (val.clinicalTitle) {
+          this.formObj.clinicalTitle = strToArr(val.clinicalTitle)
+        }
+        if (val.direction) {
+          this.dyStrArr = strToArr(val.direction)
+        }
+      } else {
+        this.objId = ''
+        this.formObj = {
+          account: '',
+          name: '',
+          department: '',
+          clinicalTitle: [],
+          teachTitle: '',
+          position: '',
+          direction: '',
+          descp: '',
+          image: ''
         }
       }
       setTimeout(() => {
         that.dialogFormVisible = true
       }, 1)
     },
-    saveSubmitInfo() {
+    closeForm(formName) {
+      this.$refs[formName].resetFields()
+      this.formObj.image = ''
+      this.$parent.resetInfo()
+      this.dialogFormVisible = false
+    },
+    submitForm(formName) {
       var that = this
-      this.$refs['formObj'].validate(valid => {
+      that.$refs[formName].validate((valid) => {
         if (valid) {
+          const form = that.formObj
           const paramsData = {
-
+            name: form.name,
+            account: form.account,
+            department: form.department,
+            clinicalTitle: arrToStr(form.clinicalTitle),
+            teachTitle: form.teachTitle,
+            position: form.position,
+            direction: form.direction,
+            descp: form.descp,
+            image: form.image
           }
-          // that.$http.post('/esn/add', paramsData, function(res) {
-          //   if (res.success) {
-          //     that.$message({
-          //       message: '信息保存成功',
-          //       type: 'success'
-          //     })
-          //     that.closeDialog()
-          //     that.$parent.resetInfo()
-          //   }
-          // })
+          if (that.objId) {
+            const paramsId = { id: that.objId }
+            const obj = Object.assign(paramsId, paramsData)
+            that.$http.post(updateDoctor, obj, function(res) {
+              if (res.success) {
+                that.$message({
+                  message: '信息修改成功',
+                  type: 'success'
+                })
+                that.closeForm(formName)
+              }
+            })
+          } else {
+            that.$http.post(addDoctor, paramsData, function(res) {
+              if (res.success) {
+                that.$message({
+                  message: '信息添加成功',
+                  type: 'success'
+                })
+                that.closeForm(formName)
+              }
+            })
+          }
+        } else {
+          window.scroll(0, 0)
+          return false
         }
       })
     },
-    closeDialog() {
-      this.$refs['formObj'].resetFields()
-      this.dialogFormVisible = false
-    },
     uploadfun(value) {
-      this.formObj.logo = value
+      this.formObj.image = value
+    },
+    turnTags(value) {
+      this.formObj.direction = value
+    },
+    changeCascader(val) {
+      // this.formObj.clinicalTitle = val
     }
   }
 }

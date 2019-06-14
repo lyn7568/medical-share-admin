@@ -16,8 +16,17 @@
         :className="item.active"
       >
         <template slot-scope="scope">
-          <div v-if="scope.row[item.prop]">{{scope.row[item.prop]}}</div>
-          <div v-if="item.operate && typeof scope.row === 'object'">
+          <template v-if="scope.row[item.prop]">
+            <div v-if="item.hLevel">{{scope.row[item.prop] | hLevel }}</div>
+            <div v-else-if="item.hSubLevel">{{scope.row[item.prop] | hSubLevel }}</div>
+            <div v-else-if="item.hType">{{scope.row[item.prop] | hType }}</div>
+            <div v-else-if="item.aStatus">{{scope.row[item.prop] | aStatus }}</div>
+            <div v-else-if="item.tTitle">{{scope.row[item.prop] | tTitle }}</div>
+            <div v-else-if="item.cTitle">{{scope.row[item.prop] | cTitle }}</div>
+            <div v-else-if="item.dCur">{{scope.row[item.prop] | dCur }}</div>
+            <div v-else>{{scope.row[item.prop]}}</div>
+          </template>
+          <div v-else-if="item.operate && typeof scope.row === 'object'">
             <el-button
               size="mini"
               v-for="operate in tableObject.oFun"

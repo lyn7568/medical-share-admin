@@ -27,31 +27,19 @@
 </template>
 
 <script>
+  import { pageQueryApply, deleteApply } from '@/api/api'
   import complexTable from '@/components/complexTable'
-  // import { pageInquireUrl, deleteUrl, inquireContentUrl } from '@/api/content'
-  // import { parseTime, contentType } from '@/utils/index'
-  // import comTable from '@/utils/comTable'
-  // import cacheModule from '@/utils/queryName'
   import editApply from './editApply'
+  import { slelectUseStatus } from '@/utils/dict'
   export default {
     data() {
       return {
         searchText: '',
         useState: '',
-        useLists: [
-          { label: '空闲', value: '1' },
-          { label: '适中', value: '2' },
-          { label: '繁忙', value: '3' }
-        ],
+        useLists: slelectUseStatus,
         tableLoading: false,
         tableObject: {
-          data: [
-            {
-              account: '1234',
-              name: 'dkjfjds',
-              catalog: '2'
-            }
-          ],
+          data: [],
           pageNo: 1,
           total: 0,
           pageSize: 10,
@@ -61,19 +49,21 @@
               tit: '器械姓名'
             },
             {
-              prop: 'catalog',
-              tit: '所属科室'
+              prop: 'department',
+              tit: '所属科室',
+              dCur: true
             },
             {
-              prop: 'state',
-              tit: '使用状态'
+              prop: 'status',
+              tit: '使用状态',
+              aStatus: true
             },
             {
-              prop: 'title',
+              prop: 'spec',
               tit: '厂商型号'
             },
             {
-              prop: 'title',
+              prop: 'application',
               tit: '用途功能',
               width: '260'
             },
@@ -99,81 +89,53 @@
       }
     },
     created() {
-      this.publishList()
+      this.queryInfoList()
     },
     components: {
       complexTable,
       editApply
     },
     methods: {
-      publishList() {
-        // var that = this
-        // this.$http.get(pageInquireUrl, this.info, (response) => {
-        //   if (response.success && response.data) {
-        //     const res = response.data
-        //     const epData = res.data
-        //     let j = 0
-        //     for (let i = 0; i < epData.length; i++) {
-        //       epData[i].modifyTime = parseTime(epData[i].modifyTime).substr(0, 16)
-        //       epData[i].catalog = contentType[epData[i].catalog]
-        //       j++
-        //       cacheModule.Judge(epData[i].creator, info => {
-        //         j--
-        //         epData[i].creator = info.name
-        //         if (j === 0) {
-        //           this.total = res.total
-        //           if (epData.length === that.info.pageSize) {
-        //             this.tableData = epData
-        //           } else {
-        //             const array = epData
-        //             comTable.gapFilling(array)
-        //             this.tableData = array
-        //           }
-        //         }
-        //       })
-        //     }
-        //     if (epData.length === 0) {
-        //       this.total = 0
-        //       this.tableData = []
-        //     }
-        //   } else {
-        //     this.total = 0
-        //     this.tableData = []
-        //   }
-        // })
+      queryInfoList() {
+        var that = this
+        this.tableLoading = true
+        this.$http.get(pageQueryApply, {
+          active: 1,
+          name: this.searchText,
+          status: this.useState,
+          pageSize: this.tableObject.pageSize,
+          pageNo: this.tableObject.pageNo
+        }, function(response) {
+          if (response.success) {
+            if (response.data === null) {
+              that.tableObject.data = []
+              that.tableObject.total = 0
+              setTimeout(() => {
+                that.tableLoading = false
+              }, 1.5 * 1000)
+              return
+            }
+            that.tableObject.data = response.data.data
+            that.tableObject.total = response.data.total
+            setTimeout(() => {
+              that.tableLoading = false
+            }, 1.5 * 1000)
+          }
+        })
       },
-      deleteFun(obj) {
-        this.$confirm('确定删除该条内容？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+      deleteFun(row) {
+        var that = this
+        this.$confirm('确定删除该器械？', '提示', {
           type: 'warning',
-          center: true
-        }).then(() => {
-          // this.$http.get(deleteUrl, { id: obj.id }, response => {
-          //   if (response.success) {
-          //     if (response.data) {
-          //       this.publishList()
-          //       this.$message({
-          //         message: '删除成功',
-          //         type: 'success'
-          //       })
-          //     } else {
-          //       this.$http.get(inquireContentUrl, { id: this.id }, (response) => {
-          //         if (response.success && response.data) {
-          //           const info = response.data
-          //           if (!info.actived) {
-          //             this.$message({
-          //               message: '该内容已被删除',
-          //               type: 'warning'
-          //             })
-          //           }
-          //         }
-          //       })
-          //     }
-          //   }
-          // })
-        }).catch(() => {
-
+          callback: action => {
+            if (action === 'confirm') {
+              this.$http.get(deleteApply, { id: row.id }, function(response) {
+                if (response.success) {
+                  that.queryInfoList()
+                }
+              })
+            }
+          }
         })
       },
       search() {
@@ -183,7 +145,6 @@
         this.tableObject.data = []
         this.tableObject.pageNo = 1
         this.tableObject.total = 0
-        this.tableObject.pageSize = 10
         this.queryInfoList()
       },
       currentPageChange(val) {
@@ -193,8 +154,8 @@
       editOpenDialogFun(val) {
         this.$refs.openApplyDialog.openDiag(val)
       },
-      addOpenDialogFun(val) {
-        this.$refs.openApplyDialog.openDiag(val)
+      addOpenDialogFun() {
+        this.$refs.openApplyDialog.openDiag()
       }
     }
   }

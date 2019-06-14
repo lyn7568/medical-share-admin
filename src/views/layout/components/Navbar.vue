@@ -1,7 +1,7 @@
  <template>
   <div>
     <el-menu class="navbar" mode="horizontal">
-      <hamburger v-if="roles.indexOf('1')>=0" class="hamburger-container" :toggleClick="toggleSideBar" :isActive="sidebar.opened"></hamburger>
+      <hamburger class="hamburger-container" :toggleClick="toggleSideBar" :isActive="sidebar.opened"></hamburger>
       <breadcrumb></breadcrumb>
     </el-menu>
   </div>
@@ -19,8 +19,7 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'sidebar',
-      'roles'
+      'sidebar'
     ])
   },
   methods: {

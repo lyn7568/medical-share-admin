@@ -3,7 +3,7 @@
     <div class="box-container">
       <div class="contain-search">
         <el-input placeholder="搜索医生姓名" clearable v-model="searchText" class="input-with-select"></el-input>
-        <el-input placeholder="搜索所在科室" clearable v-model="searchText" class="input-with-select"></el-input>
+        <el-input placeholder="搜索所属科室" clearable v-model="selOpt1" class="input-with-select"></el-input>
         <el-button type="primary" @click.stop="search">查找</el-button>
         <el-button type="primary" @click.stop="addOpenDialogFun">添加医生</el-button>
       </div>
@@ -20,24 +20,16 @@
 
 <script>
   import complexTable from '@/components/complexTable'
-  // import { pageInquireUrl, deleteUrl, inquireContentUrl } from '@/api/content'
-  // import { parseTime, contentType } from '@/utils/index'
-  // import comTable from '@/utils/comTable'
-  // import cacheModule from '@/utils/queryName'
+  import { pageQueryDoctor, deleteDoctor } from '@/api/api'
   import editDoctor from './editDoctor'
   export default {
     data() {
       return {
         searchText: '',
+        selOpt1: '',
         tableLoading: false,
         tableObject: {
-          data: [
-            {
-              account: '1234',
-              name: 'dkjfjds',
-              catalog: '2'
-            }
-          ],
+          data: [],
           pageNo: 1,
           total: 0,
           pageSize: 10,
@@ -51,19 +43,22 @@
               tit: '医生姓名'
             },
             {
-              prop: 'catalog',
-              tit: '所属科室'
+              prop: 'department',
+              tit: '所属科室',
+              dCur: true
             },
             {
-              prop: 'title',
-              tit: '临床职称'
+              prop: 'clinicalTitle',
+              tit: '临床职称',
+              cTitle: true
             },
             {
-              prop: 'title',
-              tit: '教学职称'
+              prop: 'teachTitle',
+              tit: '教学职称',
+              tTitle: true
             },
             {
-              prop: 'title',
+              prop: 'position',
               tit: '行政职务'
             },
             {
@@ -88,81 +83,53 @@
       }
     },
     created() {
-      this.publishList()
+      this.queryInfoList()
     },
     components: {
       complexTable,
       editDoctor
     },
     methods: {
-      publishList() {
-        // var that = this
-        // this.$http.get(pageInquireUrl, this.info, (response) => {
-        //   if (response.success && response.data) {
-        //     const res = response.data
-        //     const epData = res.data
-        //     let j = 0
-        //     for (let i = 0; i < epData.length; i++) {
-        //       epData[i].modifyTime = parseTime(epData[i].modifyTime).substr(0, 16)
-        //       epData[i].catalog = contentType[epData[i].catalog]
-        //       j++
-        //       cacheModule.Judge(epData[i].creator, info => {
-        //         j--
-        //         epData[i].creator = info.name
-        //         if (j === 0) {
-        //           this.total = res.total
-        //           if (epData.length === that.info.pageSize) {
-        //             this.tableData = epData
-        //           } else {
-        //             const array = epData
-        //             comTable.gapFilling(array)
-        //             this.tableData = array
-        //           }
-        //         }
-        //       })
-        //     }
-        //     if (epData.length === 0) {
-        //       this.total = 0
-        //       this.tableData = []
-        //     }
-        //   } else {
-        //     this.total = 0
-        //     this.tableData = []
-        //   }
-        // })
+      queryInfoList() {
+        var that = this
+        this.tableLoading = true
+        this.$http.get(pageQueryDoctor, {
+          active: 1,
+          name: this.searchText,
+          department: this.selOpt1,
+          pageSize: this.tableObject.pageSize,
+          pageNo: this.tableObject.pageNo
+        }, function(response) {
+          if (response.success) {
+            if (response.data === null) {
+              that.tableObject.data = []
+              that.tableObject.total = 0
+              setTimeout(() => {
+                that.tableLoading = false
+              }, 1.5 * 1000)
+              return
+            }
+            that.tableObject.data = response.data.data
+            that.tableObject.total = response.data.total
+            setTimeout(() => {
+              that.tableLoading = false
+            }, 1.5 * 1000)
+          }
+        })
       },
-      deleteFun(obj) {
-        this.$confirm('确定删除该条内容？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
+      deleteFun(row) {
+        var that = this
+        this.$confirm('确定删除该医生？', '提示', {
           type: 'warning',
-          center: true
-        }).then(() => {
-          // this.$http.get(deleteUrl, { id: obj.id }, response => {
-          //   if (response.success) {
-          //     if (response.data) {
-          //       this.publishList()
-          //       this.$message({
-          //         message: '删除成功',
-          //         type: 'success'
-          //       })
-          //     } else {
-          //       this.$http.get(inquireContentUrl, { id: this.id }, (response) => {
-          //         if (response.success && response.data) {
-          //           const info = response.data
-          //           if (!info.actived) {
-          //             this.$message({
-          //               message: '该内容已被删除',
-          //               type: 'warning'
-          //             })
-          //           }
-          //         }
-          //       })
-          //     }
-          //   }
-          // })
-        }).catch(() => {
-
+          callback: action => {
+            if (action === 'confirm') {
+              this.$http.get(deleteDoctor, { id: row.id }, function(response) {
+                if (response.success) {
+                  that.queryInfoList()
+                }
+              })
+            }
+          }
         })
       },
       search() {
@@ -172,7 +139,6 @@
         this.tableObject.data = []
         this.tableObject.pageNo = 1
         this.tableObject.total = 0
-        this.tableObject.pageSize = 10
         this.queryInfoList()
       },
       currentPageChange(val) {
@@ -182,8 +148,8 @@
       editOpenDialogFun(val) {
         this.$refs.openDoctorDialog.openDiag(val)
       },
-      addOpenDialogFun(val) {
-        this.$refs.openDoctorDialog.openDiag(val)
+      addOpenDialogFun() {
+        this.$refs.openDoctorDialog.openDiag()
       }
     }
   }

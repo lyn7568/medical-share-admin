@@ -1,28 +1,16 @@
 import request from '@/utils/request'
 import { login, logout, getInfo } from '@/api/api'
-import Cookies from 'js-cookie'
 
 const user = {
   state: {
-    account: '',
-    userid: '',
+    userid: sessionStorage.getItem('user_auth') || '',
     name: '',
-    roles: [],
-    hospital: '',
-    department: ''
+    roles: []
   },
   mutations: {
-    SET_ACCOUNT: (state, account) => {
-      state.account = account
-    },
     SET_USERID: (state, userid) => {
       state.userid = userid
-    },
-    SET_HOSPITAL: (state, hospital) => {
-      state.hospital = hospital
-    },
-    SET_DEPART: (state, department) => {
-      state.department = department
+      sessionStorage.setItem('user_auth', userid)
     },
     SET_NAME: (state, name) => {
       state.name = name
@@ -43,16 +31,13 @@ const user = {
             if (response.data) {
               const dataS = response.data
               if (dataS.active) {
-                if (dataS.account === 'admin') {
+                if (dataS.id === '2319F311BE294CB9A8FBF05F267ED77A') {
                   commit('SET_ROLES', ['1'])
                 } else {
                   commit('SET_ROLES', ['0'])
                 }
                 commit('SET_USERID', dataS.id)
                 commit('SET_NAME', dataS.name)
-                commit('SET_HOSPITAL', dataS.hospital)
-                commit('SET_DEPART', dataS.department)
-                Cookies.set('user_auth', dataS.id)
               }
             }
           }
@@ -71,16 +56,13 @@ const user = {
             if (response.data) {
               const dataS = response.data
               if (dataS.active) {
-                if (dataS.account === 'admin') {
+                if (dataS.id === '2319F311BE294CB9A8FBF05F267ED77A') {
                   commit('SET_ROLES', ['1'])
                 } else {
                   commit('SET_ROLES', ['0'])
                 }
                 commit('SET_USERID', dataS.id)
                 commit('SET_NAME', dataS.name)
-                commit('SET_HOSPITAL', dataS.hospital)
-                commit('SET_DEPART', dataS.department)
-                Cookies.set('user_auth', dataS.id)
               }
             }
           }
@@ -96,10 +78,8 @@ const user = {
       return new Promise((resolve, reject) => {
         request.get(logout, { }, function(response) {
           commit('SET_ROLES', [])
+          commit('SET_USERID', '')
           commit('SET_NAME', '')
-          commit('SET_HOSPITAL', '')
-          commit('SET_DEPART', '')
-          Cookies.remove('user_auth')
           resolve(response)
         }, function(error) {
           reject(error)
@@ -110,8 +90,9 @@ const user = {
     // 前端 登出
     FedLogOut({ commit }) {
       return new Promise(resolve => {
-        commit('SET_SESSION', '')
-        Cookies.remove('user_auth')
+        commit('SET_ROLES', [])
+        commit('SET_USERID', '')
+        commit('SET_NAME', '')
         resolve()
       })
     }

@@ -82,6 +82,17 @@ var ret = {
     }).catch(err => {
       Message.error(err || '网络异常')
     })
+  },
+  put: function(url, Da, sh, eh) {
+    service({
+      method: 'put',
+      url: url,
+      data: Da
+    }).then(res => {
+      sh(res)
+    }).catch(err => {
+      if (eh) eh(err)
+    })
   }
 }
 

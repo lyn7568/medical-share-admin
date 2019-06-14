@@ -9,7 +9,7 @@
         <span class="svg-container svg-container_login">
           <svg-icon icon-class="user" />
         </span>
-        <el-input name="username" type="text" v-model="loginForm.username" autoComplete="on" placeholder="请输入您的账号" maxlength="11" />
+        <el-input name="username" type="text" v-model="loginForm.username" autoComplete="on" placeholder="请输入您的账号" />
       </el-form-item>
       <el-form-item prop="password">
         <span class="svg-container">
@@ -30,8 +30,6 @@
 </template>
 
 <script>
-import request from '@/utils/request'
-import { checkRegister } from '@/api/api'
 import { Message } from 'element-ui'
 import waves from '@/directive/waves'
 import '@/styles/loginform.scss'
@@ -43,29 +41,14 @@ export default {
   },
   data() {
     var validPhone = (rule, value, callback) => {
-      const reg = /^1[3|4|5|7|8][0-9]\d{8}$/
+      // const reg = /^1[3|4|5|7|8][0-9]\d{8}$/
       if (value === 'admin') {
         callback()
       }
       if (!value) {
         callback(new Error('请输入您的账号'))
       } else {
-        if (!reg.test(value)) {
-          callback(new Error('请输入正确的手机号码'))
-        } else {
-          // request.get(checkRegister, { account: value }, function(response) {
-          //   if (response.success) {
-          //     if (response.data === -1) {
-          //       callback(new Error('该账号已停用，请联系管理员'))
-          //     } else if (response.data === 1) {
-          //       callback(new Error('该账号不存在，请检查后重试'))
-          //     } else if (response.data === 0) {
-          //       callback()
-          //     }
-          //   }
-          // })
-          callback()
-        }
+        callback()
       }
     }
     return {
@@ -103,7 +86,16 @@ export default {
             this.loading = false
             if (response.success) {
               if (response.data) {
-                this.$router.push({ path: '/' })
+                var roles = []
+                if (response.data.id === '2319F311BE294CB9A8FBF05F267ED77A') {
+                  roles = ['1']
+                } else {
+                  roles = ['0']
+                }
+                this.$store.dispatch('GenerateRoutes', { roles }).then(() => {
+                  this.$router.addRoutes(this.$store.getters.addRouters)
+                  this.$router.push({ path: '/' })
+                })
               } else {
                 Message.error('登录账号与密码不匹配，请检查后重试')
                 return

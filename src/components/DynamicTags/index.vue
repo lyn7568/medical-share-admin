@@ -12,23 +12,6 @@
         @blur="handleInputConfirm"
       >
       </el-input>
-      <!-- <el-autocomplete
-        class="input-new-tag"
-        v-if="inputVisible"
-        v-model="inputValue"
-        ref="saveTagInput"
-        size="medium"
-        :placeholder="tagInfo.placeholder"
-        :trigger-on-focus="false"
-        @select="handleSelect"
-        :fetch-suggestions="querySearch"
-        @keyup.enter.native="handleInputConfirm"
-        @blur="handleInputConfirm"
-      >
-        <template slot-scope="{ item }">
-          <div class="name">{{ item.caption }}</div>
-        </template>
-      </el-autocomplete> -->
       <el-button v-else class="button-new-tag" size="medium" @click="showInput">+ {{tagInfo.placeholder}}</el-button>
     </div>
     <div class="tag-show" :class="tagInfo.tagblock ? 'tag-block' : ''">
@@ -56,7 +39,7 @@
  * }
 */
 // import httpUrl from '@/libs/http'
-import { trimStr } from '@/utils'
+import { trimStr, arrToStr } from '@/utils'
 export default {
   props: ['dyStr', 'tagInfo'],
   data() {
@@ -76,7 +59,7 @@ export default {
       }, 100)
     },
     dynamicTags(value) {
-      const list = value
+      const list = arrToStr(value)
       this.$emit('turnTags', list)
     },
     inputValue(value) {
@@ -133,29 +116,6 @@ export default {
       this.inputValue = ''
     }
     // add tag
-
-    // select key tag
-    // querySearch(queryString, cb) {
-    //   this.$axios.get(httpUrl.kxQurey.qaHotKey, {
-    //     key: queryString
-    //   }, (res) => {
-    //     if (res.success) {
-    //       var $info = res.data;
-    //       var oSr = [];
-    //       for (let i = 0; i < Math.min($info.length, 5); i++) {
-    //         oSr[i] = $info[i];
-    //       };
-    //       this.loadAllKeys = oSr;
-    //       // if (this.loadAllKeys.length === 0) {
-    //       //   this.loadAllKeys = [{caption: '暂无数据'}]
-    //       // };
-    //       cb(this.loadAllKeys);
-    //     };
-    //   });
-    // },
-    // handleSelect(item) {
-    //   this.inputValue = item.caption
-    // }
   }
 }
 </script>

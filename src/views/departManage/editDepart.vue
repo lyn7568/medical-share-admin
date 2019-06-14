@@ -4,18 +4,17 @@
     title="科室管理"
     :visible.sync="dialogFormVisible"
     :close-on-click-modal="false"
-    width="760px"
+    width="640px"
+    @close="closeForm('formObj')"
   >
     <el-form
-      :model="formObj"
-      ref="formObj"
-      :rules="rulesObj"
+      :model="formObj" ref="formObj" :rules="rulesObj"
       label-width="80px"
       class="update-wrapper demo-ruleForm"
       v-loading="formLoading"
     >
       <el-row :gutter="25">
-        <el-col :span="18">
+        <el-col :span="24">
           <el-row :gutter="20" class="update-main">
             <el-col :span="item.span||''" v-for="item in formItem" :key="item.index">
               <el-form-item v-if="item.prop" :label="item.tit" :prop="item.prop">
@@ -36,22 +35,6 @@
                     @current-change="sel.value"
                   ></el-option>
                 </el-select>
-                <dynamicTags
-                  v-else-if="item.tag"
-                  :tagInfo="item.tag"
-                  @turnTags="turnSubjectTags($event)"
-                ></dynamicTags>
-                <el-cascader
-                  v-else-if="item.cascader"
-                  :options="item.cascader"
-                  :props="{
-                    value: 'value',
-                    label: 'label',
-                    children: 'children'
-                  }"
-                  v-model="formObj[item.prop]"
-                  :placeholder="'请选择'+item.tit">
-                </el-cascader>
                 <el-input
                   v-else
                   v-model="formObj[item.prop]"
@@ -63,25 +46,24 @@
             </el-col>
           </el-row>
         </el-col>
-        <el-col :span="6">
-          <uploadFile :upImgsStr="formObj.logo" :uploadImg="uploadImg" @uploadfun="uploadfun"></uploadFile>
-        </el-col>
       </el-row>
     </el-form>
     <div slot="footer" class="dialog-footer" align="center">
       <el-button @click="dialogFormVisible = false">取 消</el-button>
-      <el-button type="primary" @click="saveSubmitInfo">保 存</el-button>
+      <el-button type="primary" @click="submitForm('formObj')">保 存</el-button>
     </div>
   </el-dialog>
 </template>
 
 <script>
 import { requiredTip } from '@/utils'
-import uploadFile from '@/components/uploadFile'
-import dynamicTags from '@/components/DynamicTags'
+import { slelectDepartType } from '@/utils/dict'
+import { addDepart, updateDepart, checkDepart } from '@/api/api'
+
 export default {
   data() {
     return {
+      objId: '',
       dialogFormVisible: false,
       formItem: [
         {
@@ -93,14 +75,10 @@ export default {
         },
         {
           span: 12,
-          prop: 'titi',
+          prop: 'type',
           tit: '科室类别',
-          select: [
-            { label: '教授', value: '1' },
-            { label: '副教授', value: '2' },
-            { label: '讲师', value: '3' },
-            { label: '助理讲师', value: '4' }
-          ]
+          select: slelectDepartType,
+          required: true
         },
         {
           span: 12,
@@ -117,7 +95,7 @@ export default {
         {
           span: 24,
           prop: 'descp',
-          tit: '医院简介',
+          tit: '科室简介',
           textarea: true,
           num: 2000
         }
@@ -125,39 +103,12 @@ export default {
       formLoading: false,
       formObj: {
         name: '',
-        logo: '',
-        url: '',
-        manageOrg: '',
-        addr: '',
+        type: '',
+        phone: '',
         location: '',
-        zipCode: '',
-        servicePhone: '',
-        serviceEmail: '',
-        operateTime: '',
-        linkman: '',
-        job: '',
-        department: '',
-        comp: '',
-        linkphone: '',
-        linkemail: '',
         descp: ''
       },
-      rulesObj: {},
-      uploadImg: {
-        // url: uploadLogo,
-        tip: '上传图片',
-        width: '140px',
-        height: '140px'
-      }
-    }
-  },
-  components: {
-    uploadFile,
-    dynamicTags
-  },
-  computed: {
-    UID() {
-      return this.$store.getters.userid
+      rulesObj: {}
     }
   },
   created() {
@@ -170,11 +121,46 @@ export default {
       for (let i = 0; i < formItem.length; ++i) {
         const ru = []
         if (formItem[i].required) {
-          ru.push({
-            required: true,
-            message: requiredTip(formItem[i].tit),
-            trigger: 'blur'
-          })
+          if (formItem[i].prop === 'name') {
+            ru.push({
+              required: true,
+              validator: (rule, value, callback) => {
+                if (!value) {
+                  callback(new Error('请输入科室名称'))
+                } else {
+                  var obj = {}
+                  if (this.objId) {
+                    obj = {
+                      active: 1,
+                      name: value,
+                      id: this.objId
+                    }
+                  } else {
+                    obj = {
+                      active: 1,
+                      name: value
+                    }
+                  }
+                  this.$http.get(checkDepart, obj, function(res) {
+                    if (res.success) {
+                      if (res.data) {
+                        callback(new Error('该科室名称已存在，请重新输入'))
+                      } else {
+                        callback()
+                      }
+                    }
+                  })
+                }
+              },
+              trigger: 'blur'
+            })
+          } else {
+            ru.push({
+              required: true,
+              message: requiredTip(formItem[i].tit),
+              trigger: 'blur'
+            })
+          }
         }
         rulesObj[formItem[i].prop] = ru
       }
@@ -185,40 +171,67 @@ export default {
         this.objId = val.id
         this.formObj = val
       } else {
+        this.objId = ''
         this.formObj = {
-          test: ''
+          name: '',
+          type: '',
+          phone: '',
+          location: '',
+          descp: ''
         }
       }
       setTimeout(() => {
         that.dialogFormVisible = true
       }, 1)
     },
-    saveSubmitInfo() {
-      var that = this
-      this.$refs['formObj'].validate(valid => {
-        if (valid) {
-          const paramsData = {
-
-          }
-          // that.$http.post('/esn/add', paramsData, function(res) {
-          //   if (res.success) {
-          //     that.$message({
-          //       message: '信息保存成功',
-          //       type: 'success'
-          //     })
-          //     that.closeDialog()
-          //     that.$parent.resetInfo()
-          //   }
-          // })
-        }
-      })
-    },
-    closeDialog() {
-      this.$refs['formObj'].resetFields()
+    closeForm(formName) {
+      this.$refs[formName].resetFields()
+      this.formObj.image = ''
+      this.$parent.resetInfo()
       this.dialogFormVisible = false
     },
-    uploadfun(value) {
-      this.formObj.logo = value
+    submitForm(formName) {
+      var that = this
+      that.$refs[formName].validate((valid) => {
+        if (valid) {
+          const form = that.formObj
+          const paramsData = {
+            name: form.name,
+            type: form.type,
+            phone: form.phone,
+            descp: form.descp,
+            location: form.location
+          }
+          if (that.objId) {
+            const paramsId = { id: that.objId }
+            const obj = Object.assign(paramsId, paramsData)
+            that.$http.post(updateDepart, obj, function(res) {
+              if (res.success) {
+                that.$message({
+                  message: '信息修改成功',
+                  type: 'success'
+                })
+                that.closeForm(formName)
+                that.$store.dispatch('getDictDepart')
+              }
+            })
+          } else {
+            that.$http.post(addDepart, paramsData, function(res) {
+              if (res.success) {
+                that.$message({
+                  message: '信息添加成功',
+                  type: 'success'
+                })
+                that.closeForm(formName)
+                that.$store.dispatch('getDictDepart')
+              }
+            })
+          }
+        } else {
+          window.scroll(0, 0)
+          return false
+        }
+      })
     }
   }
 }

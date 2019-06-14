@@ -43,10 +43,10 @@ export function strToArr(str) {
     return subs
   }
 }
-export function arrToStr(arr) {
+export function arrToStr(arr, fh = ',') {
   var strs = ''
   if (arr) {
-    strs = arr.join(',')
+    strs = arr.join(fh)
     return strs
   } else {
     return strs
@@ -55,4 +55,8 @@ export function arrToStr(arr) {
 
 export function requiredTip(str) {
   return `请填写${str}`
+}
+
+export function trimStr(str) {
+  return str.replace(/(^\s*)|(\s*$)/g, '')
 }

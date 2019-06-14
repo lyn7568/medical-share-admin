@@ -32,7 +32,18 @@ export const constantRouterMap = [
       meta: { title: '重置密码' },
       component: () => import('@/views/resetPwd/index')
     }]
-  },
+  }
+]
+
+export default new Router({
+  scrollBehavior: () => ({ y: 0 }),
+  routes: constantRouterMap
+})
+
+// 异步挂载的路由
+// 动态需要根据权限加载的路由表
+
+export const asyncHospRouterMap = [
   {
     path: '',
     component: Layout,
@@ -41,7 +52,8 @@ export const constantRouterMap = [
         path: 'doctorManage',
         name: 'doctorManage',
         meta: {
-          title: '医生管理'
+          title: '医生管理',
+          icon: 'peoples'
         },
         component: () => import('@/views/doctorManage/index')
       }
@@ -55,7 +67,8 @@ export const constantRouterMap = [
         path: 'departManage',
         name: 'departManage',
         meta: {
-          title: '科室管理'
+          title: '科室管理',
+          icon: 'table'
         },
         component: () => import('@/views/departManage/index')
       }
@@ -69,7 +82,8 @@ export const constantRouterMap = [
         path: 'applyManage',
         name: 'applyManage',
         meta: {
-          title: '器械管理'
+          title: '器械管理',
+          icon: 'list'
         },
         component: () => import('@/views/applyManage/index')
       }
@@ -83,36 +97,30 @@ export const constantRouterMap = [
         path: 'infoManage',
         name: 'infoManage',
         meta: {
-          title: '医院信息管理'
+          title: '医院信息管理',
+          icon: 'building'
         },
         component: () => import('@/views/infoManage/index')
       }
     ]
   },
+  { path: '*', redirect: '/404', hidden: true }
+]
+export const asyncAdminRouterMap = [
   {
     path: '',
     component: Layout,
     children: [
       {
-        path: 'superAdministrator',
-        name: 'superAdministrator',
+        path: 'hospitalManage',
+        name: 'hospitalManage',
         meta: {
-          title: '超级管理员'
+          title: '医院管理',
+          icon: 'building'
         },
-        component: () => import('@/views/superAdministrator/index')
+        component: () => import('@/views/hospitalManage/index')
       }
     ]
   },
   { path: '*', redirect: '/404', hidden: true }
-]
-
-export default new Router({
-  scrollBehavior: () => ({ y: 0 }),
-  routes: constantRouterMap
-})
-
-// 异步挂载的路由
-// 动态需要根据权限加载的路由表
-
-export const asyncRouterMap = [
 ]
