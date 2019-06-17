@@ -92,6 +92,7 @@ export default {
                 } else {
                   roles = ['0']
                 }
+                this.$store.dispatch('getDictDepart')
                 this.$store.dispatch('GenerateRoutes', { roles }).then(() => {
                   this.$router.addRoutes(this.$store.getters.addRouters)
                   this.$router.push({ path: '/' })

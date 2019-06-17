@@ -31,7 +31,6 @@ new Vue({
   store,
   created() {
     this.$store.dispatch('getCityData')
-    this.$store.dispatch('getDictDepart')
   },
   render: h => h(App)
 })

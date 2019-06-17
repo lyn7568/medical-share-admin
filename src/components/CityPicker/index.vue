@@ -93,16 +93,18 @@ export default {
       this.sheng = p.value
       this.shi = ''
       this.qu = ''
-      // this.shi = p.defaultChild.value
-      this.E = p.defaultChild.id
+      this.shi = p.defaultChild.value
+      this.qu = p.defaultChild.defaultChild.value
+      this.E = p.defaultChild.defaultChild.id
       this.$emit('paren', this.E)
       // this.$emit('parenStr', this.shi)
     },
     choseCity: function(e) {
       var p = this.citydata[e.slice(0, 2) + '0000'].children[e]
       this.blockArr = p.children
-      this.E = p.id
       this.shi = p.value
+      this.qu = p.defaultChild.value
+      this.E = p.defaultChild.id
       this.$emit('paren', this.E)
       // this.$emit('parenStr', this.shi)
     },
