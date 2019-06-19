@@ -116,7 +116,8 @@ export default {
           prop: 'department',
           tit: '所属科室',
           num: 20,
-          selectSearch: true
+          selectSearch: true,
+          required: true
         },
         {
           span: 12,

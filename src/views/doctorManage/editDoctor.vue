@@ -119,7 +119,8 @@ export default {
           prop: 'department',
           tit: '所属科室',
           num: 20,
-          selectSearch: true
+          selectSearch: true,
+          required: true
         },
         {
           span: 12,
@@ -271,6 +272,7 @@ export default {
         }
       } else {
         this.objId = ''
+        this.dyStrArr = []
         this.formObj = {
           account: '',
           name: '',
